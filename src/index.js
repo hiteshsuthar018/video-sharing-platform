@@ -10,7 +10,6 @@ connect_DB().then(() => {
   app.on("error", (error) => {
     console.log("Error :", error)
   })
-  // process.env.PORT ||
   app.listen( process.env.PORT || 8000, () => {
     console.log(`Server is running at port : ${process.env.PORT}`)
   })
@@ -21,26 +20,3 @@ connect_DB().then(() => {
 
 
 
-
-/*
-import express from "express";
-const app = express();
-
-(async ()=>{
-    try {
-      await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`);
-      //agar express ki app koi dikkat kar rahi ho to hum on listner ka use krte hai
-      app.on("error",(error)=>{
-         console.log("ERROR:",error)
-         throw error
-      })
-      app.listen(process.env.PORT ,()=>{
-        console.log(`App is listening on port ${process.env.PORT} `)
-      })
-    } catch (error) {
-        console.error("ERROR: ",error);
-        throw error
-    }
-})()
-
-*/

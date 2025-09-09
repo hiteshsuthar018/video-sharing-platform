@@ -10,12 +10,10 @@ const generateAccessAndRefreshTokens = async (userId) => {
     try {
         const user = await User.findById(userId);
         const accessToken = await user.generateAccessToken()
-        // console.log("accessToken",accessToken)
         const refreshToken = await user.generateRefreshToken()
-        // console.log("refreshToken",refreshToken)
         user.refreshToken = refreshToken;
 
-        await user.save({ validateBeforeSave: false }); //some error occurs in line
+        await user.save({ validateBeforeSave: false });
 
         return { accessToken, refreshToken }
     } catch (error) {
@@ -25,65 +23,42 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 }
 
-//🌟register user
 const registerUser = asyncHandler(async (req, res) => {
-    //get user details from frontend
-    //validation - not empty
-    //check if user already exists: username , email
-    //check for images , check for avatar
-    //upload them for cloudinary, avatar 
-    //create user object -  create entry in db
-    //remove password and refresh token field from response
-    //check for user creation
-    //return res
 
 
-    // fullName, email, username, password  ko body se nikala
     const { fullName, email, username, password } = req.body;
     console.log("email :", email)
-    //check karenge ki koi bhi data null to nhi hai
     if (
         [fullName, email, username, password].some((field) =>
-            //trim ko white sapaces ko remove karne k liye use kiya jata hai.
             field?.trim() === ""
         )) {
-        //agar hai to error de denge
         throw new ApiError(400, "All field are required")
     }
-    //username and email ki help se check karenge ki user pahle se exist to nhi karta hai
     const existedUser = await User.findOne(
         {
             $or: [{ username }, { email }]
         }
     )
-    //agar karta hai to error throw karenge
     if (existedUser) {
         throw new ApiError(409, "user with username and email already exist")
     }
-    //local storage se avatar or coverImage ka path nikalenge agar vo exist karta hai to
     const avatarLocalPath = req.files?.avatar[0]?.path;
-    // const coverImageLocalPath = req.files?.coverImage[0]?.path;
 
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files?.coverImage[0]?.path;
     }
 
-    // console.log(req.files);
-    //agar exist nhi karta hai to error denge
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is required")
     }
-    //avatar and coverImage ko cloudinary pe upload karenge
     const avatar = await uploadOnCloudinary(avatarLocalPath)
     const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
-    //agar avatar file upload nhi hui to error denge
     if (!avatar) {
         throw new ApiError(400, "Avatar file is required")
     }
 
-    //new user banayenge or sari values dal denge
     const user = await User.create({
         fullName,
         avatar: avatar.url,
@@ -93,56 +68,39 @@ const registerUser = asyncHandler(async (req, res) => {
         username: username.toLowerCase(),
 
     })
-    //created user ko find karke usme se password and refreshToken ki value nikal denge
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
-    // agar created user nhi mila matlab vo db me nhi bana to error denge
     if (!createdUser) {
         throw new Error(500, "Something went wrong while registering a user")
     }
-    // response bhej denge last me
     return res.status(201).json(
         new ApiResponse(200, createdUser, "User registred successfully")
     )
 })
 
-//🌟login user
 const loginUser = asyncHandler(async (req, res) => {
-    //req body->data
-    //username and email
-    //find the user
-    //password check
-    //access and refresh token
-    //send cookie
 
     const { username, email, password } = req.body;
 
-    //if username and email is null
     if (!username && !email) {
         throw new ApiError(400, "username and email is required");
     }
 
-    //search a user by username or email
     const user = await User.findOne({
         $or: [{ username }, { email }]
     });
 
-    //if user does not exist throw an error
     if (!user) {
         throw new ApiError(404, "User does not exist");
     }
-    //check a password valid or not by a method
     const isPasswordValid = await user.isPasswordCorrect(password);
-    //if password does not exist throw an error
     if (!isPasswordValid) {
         throw new ApiError(401, "Invalid user Credentials");
     }
 
-    //generating access and refresh Token by above mehod
     console.log("user id is", user._id);
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
-    //finding a user with access token and where password and refresh token is not include
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
     const options = {
@@ -155,7 +113,6 @@ const loginUser = asyncHandler(async (req, res) => {
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
-            //yeh response bhej rahe hai taki agar koi mobile app pe ho to vaha cookie nhi hoti
             new ApiResponse(
                 200,
                 {
@@ -171,12 +128,11 @@ const loginUser = asyncHandler(async (req, res) => {
 
 //logout user
 const logoutUser = asyncHandler(async (req, res) => {
-    // console.log("ENTER IN LOGOUT FUNCTION")
     await User.findByIdAndUpdate(
         req.user._id,
         {
             $unset: {
-                refreshToken: 1 //this removes the field from document
+                refreshToken: 1
             }
         },
         {
@@ -201,28 +157,21 @@ const logoutUser = asyncHandler(async (req, res) => {
 
 //refresh token
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    //incoming refresh token lena from the cookie or body
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
-    //agar null hai to error throw karenge
     if (!incomingRefreshToken) {
         throw new ApiError(401, "unauthorized request")
     }
     try {
 
-        //decode the incoming refresh token using jwt verify 
         const decodedToken = jwt.verify(
             incomingRefreshToken,
             process.env.REFRESH_TOKEN_SECRET
         )
-        //decoded refresh token me user ki id se user ko find karenge
         const user = await User.findById(decodedToken?._id);
-        //if user value is null to error throw karenge
         if (!user) {
             throw new ApiError(401, "Invalid Refresh Token")
         }
-        //ab check karenge ki incoming jo user ka refresh token hai and usme jo user hai uska refresh token same hai ya nhi 
-        //agar nhi hai to error throw karnege
         if (incomingRefreshToken !== user?.refreshToken) {
             throw new ApiError(401, "Refresh Token is expired or used")
         }
@@ -232,11 +181,9 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
             secure: true
         }
 
-        //ab new access and refresh token generate karenge
         const { accessToken, newRefreshToken } = await generateAccessAndRefreshTokens(user._id)
 
 
-        // ab response me cookies me access token and refresh token bhej denge
         return res
             .status(200)
             .cookie("accessToken", accessToken, options)
@@ -372,7 +319,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                 }
             },
             {
-                //jitne mere channel or subscriber ka pair hoga utne hi hamare total subscribers honge
                 $lookup: {
                     from: "subscriptions",
                     localField: "_id",
@@ -380,7 +326,6 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                     as: "subscribers"
                 }
             },
-            //jitne pairs me mai subscriber hounga utne me subscribedTo honge
             {
                 $lookup: {
                     from: "subscriptions",
@@ -420,13 +365,11 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             }
         ]
     )
-    // channel ek array hai jisme hamare pass ek object hai
     if (!channel?.length) {
         throw new ApiError(404, "channel does not exist");
     }
     return res
         .status(200)
-        //to hum yaha par array ka first object bhejenge
         .json(new ApiResponse(200, channel[0], "User channel fetched successfully"))
 })
 

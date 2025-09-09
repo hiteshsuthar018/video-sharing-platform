@@ -6,7 +6,6 @@ const router = Router();
 router.use(verifyJWT);
 
 
-//subscription
 router.route("/v/:videoId").patch(toggleVideoLike);
 router.route("/c/:commentId").patch(toggleCommentLike);
 router.route("/t/:tweetId").patch(toggleTweetLike);

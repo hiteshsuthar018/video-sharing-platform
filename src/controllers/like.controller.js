@@ -6,7 +6,6 @@ import { asyncHandler } from "../utils/asyncHandler.js"
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: toggle like on video
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Not a valid channel Id")
     }
@@ -36,7 +35,6 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const { commentId } = req.params
-    //TODO: toggle like on comment
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "Not a valid comment Id")
     }
@@ -67,7 +65,6 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
 const toggleTweetLike = asyncHandler(async (req, res) => {
     const { tweetId } = req.params
-    //TODO: toggle like on tweet
     if (!isValidObjectId(tweetId)) {
         throw new ApiError(400, "Not a valid comment Id")
     }
@@ -97,7 +94,6 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 )
 
 const getLikedVideos = asyncHandler(async (req, res) => {
-    //TODO: get all liked videos
    try {
      const videos = await Like.aggregate([
          {

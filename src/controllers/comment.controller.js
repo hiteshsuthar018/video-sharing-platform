@@ -88,7 +88,6 @@ const getVideoComments = asyncHandler(async (req, res) => {
 
 
 const addComment = asyncHandler(async (req, res) => {
-    // TODO: add a comment to a video
     const { videoId } = req.params
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "something is missing")
@@ -114,7 +113,6 @@ const addComment = asyncHandler(async (req, res) => {
 })
 
 const updateComment = asyncHandler(async (req, res) => {
-    // TODO: update a comment
     const { commentId } = req.params;
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "something is missing")
@@ -145,7 +143,6 @@ const updateComment = asyncHandler(async (req, res) => {
 })
 
 const deleteComment = asyncHandler(async (req, res) => {
-    // TODO: delete a comment
     const { commentId } = req.params;
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "something is missing")

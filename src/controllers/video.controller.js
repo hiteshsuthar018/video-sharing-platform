@@ -67,15 +67,11 @@ const getAllVideos = asyncHandler(async (req, res) => {
 
 
 const publishAVideo = asyncHandler(async (req, res) => {
-    //extract title and description from body
     const { title, description } = req.body;
-    //extract the path of video which is uploaded on local path by multer
     const videoLocalPath = req.file?.path;
-    //error handling
     if (!videoLocalPath) {
         throw new ApiError(400, "video file is required");
     }
-    // Get video duration
     let duration;
     durationOfVideo(videoLocalPath)
         .then((data) => {
@@ -84,13 +80,11 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (duration < 1) {
         throw new ApiError(400, "video is not appropriate");
     }
-    // Get thumbnail path
     try {
         extractThumbnail(videoLocalPath, 4);
     } catch (error) {
         throw new ApiError(400, error);
     }
-    // Upload video and thumbnail to cloudinary
 
     const thumbnail = await uploadOnCloudinary("public\\temp\\thumbnail.png");
     if (!thumbnail) {
@@ -100,7 +94,6 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (!videoPath) {
         throw new ApiError(400, "video file is required");
     }
-    // Create video object
     const video = await Video.create({
         videoFile: videoPath?.url,
         thumbnail: thumbnail?.url,
@@ -118,14 +111,13 @@ const publishAVideo = asyncHandler(async (req, res) => {
 
 const getVideoById = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: get video by id
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
     let video;
     try {
         await Video.findByIdAndUpdate(videoId,
-            { $inc: { views: 1 } }, // Increment views by 1
+            { $inc: { views: 1 } },
             { new: true }
         )
         video = await Video.aggregate([
@@ -216,7 +208,6 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "something went wrong");
     }
-    //TODO: update video details like title, description, thumbnail
     const { title, description } = req.body;
     if (!title || !description) {
         throw new ApiError(400, "all fields are required")
@@ -230,24 +221,18 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (!thumbnail) {
         throw new ApiError(400, "thumbnail file is missing");
     }
-    //find the video by id
     const video = await Video.findById(videoId);
-    //error checking
     if (!video) {
         throw new ApiError(400, "video is not available");
     }
     if (!video.thumbnail) {
         throw new ApiError(400, "video thumbnail is not available")
     }
-    //delete old thumbnail from cloudinary
     deleteFromCloudinary(video.thumbnail);
-    //change all thing to new
     video.thumbnail = thumbnail.url
     video.title = title
     video.description = description
-    //save
-    await video.save({ validateBeforeSave: false }); //some error occurs in line
-    //sending a response
+    await video.save({ validateBeforeSave: false });
     res.status(200).json(new ApiResponse(200, video, "all fields changed successfully"))
 
 })
@@ -257,13 +242,11 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "something went wrong");
     }
-    //TODO: delete video
     const video = await Video.findByIdAndDelete(videoId);
     
     if (!video) {
         throw new ApiError(400, "video is not available")
     }
-    //delete all comments and like of video
     await Comment.findOneAndDelete({video:videoId});
     await Like.findOneAndDelete({video:videoId});
 

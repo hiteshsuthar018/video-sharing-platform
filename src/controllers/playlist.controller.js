@@ -7,7 +7,6 @@ import { Video } from "../models/video.model.js"
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
-    //TODO: create playlist
     const { name, description } = req.body
     if (!name || !description) {
         throw new ApiError(400, "All fields are required");
@@ -28,7 +27,6 @@ const createPlaylist = asyncHandler(async (req, res) => {
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
     const { userId } = req.params
-    //TODO: get user playlists
     if (!isValidObjectId(userId)) {
         throw new ApiError(400, "Not a valid User");
     }
@@ -45,7 +43,6 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const { playlistId } = req.params
-    //TODO: get playlist by id
     if (!isValidObjectId(playlistId)) {
         throw new ApiError(400, "Not a valid Playlist")
     }
@@ -84,7 +81,6 @@ const addVideoToPlaylist = asyncHandler(async (req, res) => {
 
 const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     const { playlistId, videoId } = req.params
-    // TODO: remove video from playlist
     if (!isValidObjectId(playlistId) || !isValidObjectId(videoId)) {
         throw new ApiError(400, "Something is missing");
     }
@@ -112,7 +108,6 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
 const deletePlaylist = asyncHandler(async (req, res) => {
     const { playlistId } = req.params
-    // TODO: delete playlist
     if (!isValidObjectId(playlistId)) {
         throw new ApiError(400, "Not a valid Playlist")
     }
@@ -131,7 +126,6 @@ const updatePlaylist = asyncHandler(async (req, res) => {
     if (!isValidObjectId(playlistId)) {
         throw new ApiError(400, "Not a valid Playlist")
     }
-    //TODO: update playlist
     const { name, description } = req.body
     if (!name || !description) {
         throw new ApiError(400, "All fields are required");

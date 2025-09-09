@@ -1,6 +1,4 @@
-// Yahaan hum express ka Router import kar rahe hain.
 import { Router } from "express";
-// User controller se registerUser function ko import kar rahe hain.
 import {
     changeCurrentPassword,
     getCurrentUser,
@@ -17,11 +15,9 @@ import {
 
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
-// Ek naya router instance banate hain.
 const router = Router();
 
 
-// "/register" endpoint par POST request aane par registerUser function ko call karega.
 router.route("/register").post(
     upload.fields([
         {
@@ -37,7 +33,6 @@ router.route("/register").post(
 
 router.route("/login").post(loginUser)
 
-//secure routes
 router.route("/logout").post(verifyJWT, logoutUser);
 router.route("/refresh-token").post(refreshAccessToken);
 router.route("/change-password").post(verifyJWT, changeCurrentPassword);
@@ -52,5 +47,4 @@ router.route("/history").get(verifyJWT, getWatchHistory);
 
 
 
-// Router ko default taur par export kiya jata hai taki dusre files mein iska use ho sake.
 export default router;

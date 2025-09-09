@@ -6,7 +6,6 @@ const router = Router();
 router.use(verifyJWT);
 
 
-//subscription
 router.route("/:channelId").get(getUserChannelSubscribers).patch(toggleSubscription);
 router.route("/sub_c/:subscriberId").get(getSubscribedChannels)
 
