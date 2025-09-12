@@ -24,10 +24,10 @@ const generateAccessAndRefreshTokens = async (userId) => {
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-
-
+    // Handle both JSON and FormData requests
     const { fullName, email, username, password } = req.body;
     console.log("email :", email)
+    console.log("username :", username)
     if (
         [fullName, email, username, password].some((field) =>
             field?.trim() === ""
@@ -42,21 +42,28 @@ const registerUser = asyncHandler(async (req, res) => {
     if (existedUser) {
         throw new ApiError(409, "user with username and email already exist")
     }
-    const avatarLocalPath = req.files?.avatar[0]?.path;
-
+    const avatarLocalPath = req.files?.avatar?.[0]?.path;
     let coverImageLocalPath;
     if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
         coverImageLocalPath = req.files?.coverImage[0]?.path;
     }
 
-    if (!avatarLocalPath) {
-        throw new ApiError(400, "Avatar file is required")
+    let avatar, coverImage;
+    
+    if (avatarLocalPath) {
+        avatar = await uploadOnCloudinary(avatarLocalPath);
+        if (!avatar) {
+            throw new ApiError(400, "Failed to upload avatar")
+        }
+    } else {
+        // Use a default avatar URL or null
+        avatar = { url: "https://via.placeholder.com/150x150/3B82F6/FFFFFF?text=User" };
     }
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
-    const coverImage = await uploadOnCloudinary(coverImageLocalPath)
-
-    if (!avatar) {
-        throw new ApiError(400, "Avatar file is required")
+    
+    if (coverImageLocalPath) {
+        coverImage = await uploadOnCloudinary(coverImageLocalPath);
+    } else {
+        coverImage = { url: "https://via.placeholder.com/1200x300/6B7280/FFFFFF?text=Cover+Image" };
     }
 
     const user = await User.create({
@@ -65,7 +72,7 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: coverImage?.url || "",
         email,
         password,
-        username: username.toLowerCase(),
+        username: username ? username.toLowerCase() : "",
 
     })
     const createdUser = await User.findById(user._id).select(
@@ -272,7 +279,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     ).select("-password")
     return res
         .status(200)
-        .json(new ApiResponse(200, user, "avatar image updated successfully"))
+        .json(new ApiResponse(200, user, "Avatar image updated successfully"))
 
 })
 //update cover image

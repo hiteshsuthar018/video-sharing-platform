@@ -6,7 +6,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js"
-import { durationOfVideo, extractThumbnail } from "../../video_Tool/videoTool.js"
+// import { durationOfVideo, extractThumbnail } from "../../video_Tool/videoTool.js"
 
 
 
@@ -72,28 +72,19 @@ const publishAVideo = asyncHandler(async (req, res) => {
     if (!videoLocalPath) {
         throw new ApiError(400, "video file is required");
     }
-    let duration;
-    durationOfVideo(videoLocalPath)
-        .then((data) => {
-            duration = data;
-        })
-    if (duration < 1) {
-        throw new ApiError(400, "video is not appropriate");
-    }
-    try {
-        extractThumbnail(videoLocalPath, 4);
-    } catch (error) {
-        throw new ApiError(400, error);
-    }
-
-    const thumbnail = await uploadOnCloudinary("public\\temp\\thumbnail.png");
-    if (!thumbnail) {
-        throw new ApiError(400, "thumbnail is required");
-    }
+    // For now, we'll use a default duration and skip thumbnail extraction
+    // TODO: Implement video duration extraction and thumbnail generation
+    const duration = 60; // Default duration in seconds
+    
+    // Upload video to cloudinary
     const videoPath = await uploadOnCloudinary(videoLocalPath, "video");
     if (!videoPath) {
-        throw new ApiError(400, "video file is required");
+        throw new ApiError(400, "Video file upload failed");
     }
+    
+    // Use a default thumbnail or extract from video
+    // For now, we'll use the video URL as thumbnail (this should be replaced with actual thumbnail extraction)
+    const thumbnail = { url: videoPath.url };
     const video = await Video.create({
         videoFile: videoPath?.url,
         thumbnail: thumbnail?.url,
@@ -102,9 +93,9 @@ const publishAVideo = asyncHandler(async (req, res) => {
         duration: duration,
         owner: req.user // Assuming req.user contains owner details
     });
-    const videoFile = Video.findById(video?._id);
+    const videoFile = await Video.findById(video?._id);
     if (!videoFile) {
-        throw new ApiError(500, "something went wrong while uploading video")
+        throw new ApiError(500, "Something went wrong while uploading video")
     }
     res.status(200).json(new ApiResponse(200, video, "Video uploaded successfully"));
 });
@@ -247,8 +238,8 @@ const deleteVideo = asyncHandler(async (req, res) => {
     if (!video) {
         throw new ApiError(400, "video is not available")
     }
-    await Comment.findOneAndDelete({video:videoId});
-    await Like.findOneAndDelete({video:videoId});
+    await Comment.deleteMany({video:videoId});
+    await Like.deleteMany({video:videoId});
 
     await deleteFromCloudinary(video.videoFile, "video");
     await deleteFromCloudinary(video.thumbnail);

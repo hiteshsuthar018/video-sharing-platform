@@ -1,5 +1,6 @@
 import mongoose, { isValidObjectId } from "mongoose"
 import { Like } from "../models/like.model.js"
+import { Tweet } from "../models/tweet.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { asyncHandler } from "../utils/asyncHandler.js"
@@ -14,7 +15,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         video:videoId
     })
     try {
-        if (!(isLiked.length) > 0) {
+        if (isLiked.length === 0) {
             const like = await Like.create({
                 likedBy:req.user._id,
                 video:videoId
@@ -43,7 +44,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         comment:commentId
     })
     try {
-        if (!(isLiked.length) > 0) {
+        if (isLiked.length === 0) {
             const like = await Like.create({
                 likedBy:req.user._id,
                 comment:commentId
@@ -73,8 +74,8 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         tweet:tweetId
     })
     try {
-        if (!(isLiked.length) > 0) {
-            const like = await Tweet.create({
+        if (isLiked.length === 0) {
+            const like = await Like.create({
                 likedBy:req.user._id,
                 tweet:tweetId
             })
